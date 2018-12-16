@@ -19,11 +19,18 @@ namespace adventofcode
             fuelCellPowers = new List<FuelCellPower>();
 
             CreateFuelCells();
-            GetAllFuelCellsPower(FuelCellGridSize);
+            
+            //too many loops so very slow. definitely a better way to do it...
+            for(int g = 1; g <= Width; g++)
+            {
+                Console.WriteLine($"Calculating for grid size of {g}");
+                GetAllFuelCellsPower(g);
+            }
 
             var maxFuelCellPower = fuelCellPowers.Max(cell => cell.Power);
             var FuelCellWithMostPower = fuelCellPowers.First(x => x.Power == maxFuelCellPower);
-            Console.WriteLine($"MaxFuelCell Power {FuelCellWithMostPower.Power}, at: {FuelCellWithMostPower.X},{FuelCellWithMostPower.Y}");
+            Console.WriteLine($"MaxFuelCell Power {FuelCellWithMostPower.Power}, at:" +
+                $" {FuelCellWithMostPower.X},{FuelCellWithMostPower.Y} with grid size of {FuelCellWithMostPower.GridSize}");
             Console.ReadLine();
         }
 
@@ -33,7 +40,7 @@ namespace adventofcode
             {
                 for (int x = 0; x < Height - gridSize; x++)
                 {
-                    fuelCellPowers.Add(new FuelCellPower(x + 1, y + 1, SumCellsInBox(x, y, gridSize)));
+                    fuelCellPowers.Add(new FuelCellPower(x + 1, y + 1, SumCellsInBox(x, y, gridSize), gridSize));
                 }
             }
         }
@@ -108,11 +115,13 @@ namespace adventofcode
             public int X { get; set; }
             public int Y { get; set; }
             public int Power { get; set; }
-            public FuelCellPower(int x, int y, int power)
+            public int GridSize { get; set; }
+            public FuelCellPower(int x, int y, int power, int gridSize)
             {
                 X = x;
                 Y = y;
                 Power = power;
+                GridSize = gridSize;
             }
         }
     }
