@@ -22,7 +22,10 @@ namespace adventofcode
             //Day5.DoWork();
 
             var Day10 = new Day10();
-            Day10.DoWork();
+            //Day10.DoWork();
+
+            var Day13 = new Day13();
+            Day13.DoWork();
         }
     }
 
