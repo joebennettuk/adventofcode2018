@@ -11,27 +11,50 @@ namespace adventofcode
         public void DoWork()
         {
             var Line = File.ReadLines(input).First().ToCharArray().ToList();
-            var LineLenght = Line.Count();
-            bool KeepGoing = true;
-            while(KeepGoing)
+            var uniqueChars = Line.Select(c => c.ToString()).ToList().ConvertAll(c => c.ToUpper()).Distinct();
+            var LineLenght = 0;// Line.Count();
+            var smallestPolymer = 0;
+
+            foreach (var c in uniqueChars)
             {
-                LineLenght = Line.Count();
-                for (int i = Line.Count() - 1; i > 0; i--)
+                Console.WriteLine($"Checking: {c}");
+                var LineCopyReplaced = RemoveCharacterFromList(c, Line);
+                bool KeepGoing = true;
+                while (KeepGoing)
                 {
-                    var LineCopy = new List<char>(Line);
-                    if (CheckReaction(LineCopy[i - 1], LineCopy[i]))
+                    LineLenght = LineCopyReplaced.Count();
+                    for (int i = (LineCopyReplaced.Count() - 1); i > 0; i--)
                     {
-                        Line.RemoveAt(i);
-                        Line.RemoveAt(i - 1);
+                        if (i >= LineCopyReplaced.Count())
+                            break;
+                        var LineCopy = new List<char>(LineCopyReplaced);
+                        if (CheckReaction(LineCopy[i - 1], LineCopy[i]))
+                        {
+                            LineCopyReplaced.RemoveAt(i);
+                            LineCopyReplaced.RemoveAt(i - 1);
+                        }
                     }
+                    if (LineLenght == LineCopyReplaced.Count())
+                        KeepGoing = false;
                 }
-                if (LineLenght == Line.Count())
-                    KeepGoing = false;
+                if (smallestPolymer == 0 || LineCopyReplaced.Count() < smallestPolymer)
+                {
+                    smallestPolymer = LineCopyReplaced.Count();
+                    Console.WriteLine($"Smaller polymer so far = {smallestPolymer}");
+                }
             }
 
-            Console.WriteLine($"Length of polymer = {Line.Count()}");
-            //Console.WriteLine($"Output = {String.Join("",Line.ToArray())}");
+            Console.WriteLine($"Length of smallest polymer = {smallestPolymer}");
             Console.ReadLine();
+        }
+
+        public List<char> RemoveCharacterFromList(string c, List<char> list)
+        {
+            var replacement = new List<char>();
+
+            replacement = list.Where(x => x.ToString().ToUpper() != c).ToList();
+
+            return replacement;
         }
 
         bool CheckReaction(char chr1, char chr2)
