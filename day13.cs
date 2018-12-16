@@ -8,18 +8,15 @@ namespace adventofcode
 {
     class Day13
     {
+        const bool VISUALISE = false;
         int Height, Width;
         List<Cart> Carts;
         List<Crash> Crashes;
         char[,] Track;
-        bool Crashed { get; set; }
-        bool Visualise;
         
         string input = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName + @"\Inputs\day13input.txt";
         public void DoWork()
         {
-            Visualise = false;
-            Crashed = false;
             Crashes = new List<Crash>();
             Carts = new List<Cart>();
             var Lines = File.ReadLines(input).ToList();
@@ -27,13 +24,13 @@ namespace adventofcode
             Height = Lines.Count();
 
             Track = ReadTrack(Lines);
-            PrintTrack(Visualise);
+            PrintTrack(VISUALISE);
 
             while(Carts.Count > 1)
             {
                 MoveCartsAndPrint(null);
                 Console.WriteLine($"Carts left: {Carts.Count()}");
-                if(Visualise) Thread.Sleep(500);
+                if(VISUALISE) Thread.Sleep(500);
             }
 
             Console.WriteLine("***************CRASHES***************");
@@ -57,10 +54,10 @@ namespace adventofcode
         public void MoveCartsAndPrint(Object state)
         {
             Carts = Carts.OrderBy(cart => cart.Y).ThenBy(cart => cart.X).ToList();
-            Carts.ForEach(cart => cart.Move(Track));
+            Carts.ForEach(cart => cart.Move(Track, Carts));
 
             Console.Clear();
-            PrintTrack(Visualise);
+            PrintTrack(VISUALISE);
 
             //remove crashed carts
             Carts.RemoveAll(cart => cart.Crashed);
@@ -69,7 +66,7 @@ namespace adventofcode
         public char[,] ReadTrack(List<string> input)
         {
             var output = new char[Width, Height];
-
+            var cartId = 0;
             for (int y = 0; y < Height; y++)
             {
                 var xCounter = 0;
@@ -78,12 +75,14 @@ namespace adventofcode
                     var mapChar = trackChar;
                     if(trackChar == 'v' || trackChar == '^')
                     {
-                        Carts.Add(new Cart(trackChar, xCounter, y));
+                        Carts.Add(new Cart(cartId, trackChar, xCounter, y));
+                        cartId++;
                         mapChar = '|';
                     }
                     if(trackChar == '>' || trackChar == '<')
                     {
-                        Carts.Add(new Cart(trackChar, xCounter, y));
+                        Carts.Add(new Cart(cartId, trackChar, xCounter, y));
+                        cartId++;
                         mapChar = '-';
                     }
                     output[xCounter, y] = mapChar;
@@ -108,7 +107,6 @@ namespace adventofcode
                         {
                             cart.Crashed = true;
                         }
-                        Crashed = true;
                     } else if (Carts.Count(cart => cart.X == x && cart.Y == y) == 1)
                     {
                         if (print) Console.Write(Carts.First(cart => cart.X == x && cart.Y == y).Direction);
@@ -136,9 +134,11 @@ namespace adventofcode
             public int IntersectionCount { get; set; }
             public char Direction { get; set; }
             public bool Crashed { get; set; }
+            public int CartId { get; set; }
 
-            public Cart(char direc, int x, int y)
+            public Cart(int cartId, char direc, int x, int y)
             {
+                CartId = cartId;
                 X = x;
                 Y = y;
                 Direction = direc;
@@ -146,13 +146,21 @@ namespace adventofcode
                 Crashed = false;
             }
 
-            private void Move()
+            private void Move(List<Cart> allCarts)
             {
-                X += DirectionX;
-                Y += DirectionY;
+                if(!Crashed)
+                {
+                    X += DirectionX;
+                    Y += DirectionY;
+                }                
+                foreach(var cart in allCarts.Where(cart => cart.X == X && cart.Y == Y && cart.CartId != CartId && !cart.Crashed))
+                {
+                    cart.Crashed = true;
+                    Crashed = true;
+                }
             }
             
-            public bool Move(char[,] track)
+            public bool Move(char[,] track, List<Cart> allCarts)
             {
                 if(Direction == '^')
                 {
@@ -161,17 +169,17 @@ namespace adventofcode
                     {
                         case '/':
                             Direction = '>';
-                            Move();
+                            Move(allCarts);
                             break;
                         case '\\':
                             Direction = '<';
-                            Move();
+                            Move(allCarts);
                             break;
                         case '+':
-                            MoveIntersection(track);
+                            MoveIntersection(track, allCarts);
                             break;
                         default:
-                            Move();
+                            Move(allCarts);
                             break;
                     }
                     return true;
@@ -184,17 +192,17 @@ namespace adventofcode
                     {
                         case '\\':
                             Direction = 'v';
-                            Move();
+                            Move(allCarts);
                             break;
                         case '/':
                             Direction = '^';
-                            Move();
+                            Move(allCarts);
                             break;
                         case '+':
-                            MoveIntersection(track);
+                            MoveIntersection(track, allCarts);
                             break;
                         default:
-                            Move();
+                            Move(allCarts);
                             break;
                     }
                     return true;
@@ -207,17 +215,17 @@ namespace adventofcode
                     {
                         case '/':
                             Direction = '<';
-                            Move();
+                            Move(allCarts);
                             break;
                         case '\\':
                             Direction = '>';
-                            Move();
+                            Move(allCarts);
                             break;
                         case '+':
-                            MoveIntersection(track);
+                            MoveIntersection(track, allCarts);
                             break;
                         default:
-                            Move();
+                            Move(allCarts);
                             break;
                     }
                     return true;
@@ -230,17 +238,17 @@ namespace adventofcode
                     {
                         case '\\':
                             Direction = '^';
-                            Move();
+                            Move(allCarts);
                             break;
                         case '/':
                             Direction = 'v';
-                            Move();
+                            Move(allCarts);
                             break;
                         case '+':
-                            MoveIntersection(track);
+                            MoveIntersection(track, allCarts);
                             break;
                         default:
-                            Move();
+                            Move(allCarts);
                             break;
                     }
                     return true;
@@ -249,12 +257,12 @@ namespace adventofcode
                 return false;
             }
 
-            public bool MoveIntersection(char[,] track)
+            public bool MoveIntersection(char[,] track, List<Cart> allCarts)
             {
                 //go left
                 if (IntersectionCount == 0)
                 {
-                    Move();
+                    Move(allCarts);
                     ChangeDirectionLeft();
                     IntersectionCount++;
                     return true;
@@ -262,14 +270,14 @@ namespace adventofcode
                 //go straight
                 if (IntersectionCount == 1)
                 {
-                    Move();
+                    Move(allCarts);
                     IntersectionCount++;
                     return true;
                 }
                 //go right
                 if (IntersectionCount == 2)
                 {
-                    Move();
+                    Move(allCarts);
                     ChangeDirectionRight();
                     IntersectionCount = 0;
                     return true;
