@@ -19,10 +19,12 @@ namespace adventofcode
             //Day3.DoWork();
 
             var Day5 = new Day5();
-            Day5.DoWork();
+            //Day5.DoWork();
 
             var Day10 = new Day10();
             //Day10.DoWork();
+            var Day11 = new Day11();
+            Day11.DoWork();
 
             var Day13 = new Day13();
             //Day13.DoWork();
