@@ -13,10 +13,12 @@ namespace adventofcode
         List<Crash> Crashes;
         char[,] Track;
         bool Crashed { get; set; }
+        bool Visualise;
         
         string input = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName + @"\Inputs\day13input.txt";
         public void DoWork()
         {
+            Visualise = false;
             Crashed = false;
             Crashes = new List<Crash>();
             Carts = new List<Cart>();
@@ -25,17 +27,26 @@ namespace adventofcode
             Height = Lines.Count();
 
             Track = ReadTrack(Lines);
-            PrintTrack(false);
+            PrintTrack(Visualise);
 
-            while(!Crashed)
+            while(Carts.Count > 1)
             {
                 MoveCartsAndPrint(null);
-                //Thread.Sleep(500);
+                Console.WriteLine($"Carts left: {Carts.Count()}");
+                if(Visualise) Thread.Sleep(500);
             }
 
+            Console.WriteLine("***************CRASHES***************");
             Crashes.ForEach(PrintCrash);
+            Console.WriteLine("****************CARTS****************");
+            Carts.ForEach(PrintCart);
 
             Console.ReadLine();
+        }
+
+        private void PrintCart(Cart cart)
+        {
+            Console.WriteLine($"Cart at: {cart.X},{cart.Y}");
         }
 
         private void PrintCrash(Crash crash)
@@ -49,7 +60,10 @@ namespace adventofcode
             Carts.ForEach(cart => cart.Move(Track));
 
             Console.Clear();
-            PrintTrack(false);
+            PrintTrack(Visualise);
+
+            //remove crashed carts
+            Carts.RemoveAll(cart => cart.Crashed);
         }
         
         public char[,] ReadTrack(List<string> input)
@@ -90,6 +104,10 @@ namespace adventofcode
                     {
                         if(print) Console.Write('X');
                         Crashes.Add(new Crash() { X = x, Y = y });
+                        foreach(var cart in Carts.Where(cart => cart.X == x && cart.Y == y))
+                        {
+                            cart.Crashed = true;
+                        }
                         Crashed = true;
                     } else if (Carts.Count(cart => cart.X == x && cart.Y == y) == 1)
                     {
@@ -117,6 +135,7 @@ namespace adventofcode
             public int DirectionY { get; set; }
             public int IntersectionCount { get; set; }
             public char Direction { get; set; }
+            public bool Crashed { get; set; }
 
             public Cart(char direc, int x, int y)
             {
@@ -124,6 +143,7 @@ namespace adventofcode
                 Y = y;
                 Direction = direc;
                 IntersectionCount = 0;
+                Crashed = false;
             }
 
             private void Move()
